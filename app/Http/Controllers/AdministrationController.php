@@ -12,7 +12,8 @@ class AdministrationController extends Controller
      */
     public function index()
     {
-        return view('administrations.index');
+        $administrations = Admninistration::paginate(5);
+        return view('administrations.index', compact('administrations'));
     }
 
     /**

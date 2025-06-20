@@ -27,6 +27,6 @@ class Reservation extends Model
 
     public function administration()
     {
-        return $this->belongsToMany(Admninistration::class);
+        return $this->belongsToMany(Admninistration::class, 'reservation_passager', 'reservation_id', 'administration_id');
     }
 }

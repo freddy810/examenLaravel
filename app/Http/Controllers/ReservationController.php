@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Admninistration;
-use App\Models\Chauffeur;
 use App\Models\Reservation;
 use App\Models\Trajet;
 use App\Models\Vehicule;
+use App\Models\Chauffeur;
+use App\Models\Admninistration;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller
@@ -16,7 +16,8 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        return view('reservations.index');
+        $reservations = Reservation::with(['trajet', 'vehicule', 'chauffeur', 'administration'])->get();
+        return view('reservations.index', compact('reservations'));
     }
 
     /**
@@ -27,8 +28,9 @@ class ReservationController extends Controller
         $trajets = Trajet::all();
         $vehicules = Vehicule::all();
         $chauffeurs = Chauffeur::all();
-        $administrations = Admninistration::all();
-        return view('reservations.create', compact('trajets', 'vehicules', 'chauffeurs', 'administrations'));
+        $passagers = Admninistration::all();
+
+        return view('reservations.create', compact('trajets', 'vehicules', 'chauffeurs', 'passagers'));
     }
 
     /**
@@ -37,15 +39,27 @@ class ReservationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'date'=>'required',
-            'trajet_id'=>'required|exists:trajets,id',
-            'vehicule_id'=>'required|exists:vehicules,id',
-            'chauffeur_id'=>'required|exists:chauffeurs,id',
-            'administrations'=>'required|array',
-            'statut'=>'required',
+            'date' => 'required',
+            'trajet_id' => 'required|exists:trajets,id',
+            'vehicule_id' => 'required|exists:vehicules,id',
+            'chauffeur_id' => 'required|exists:chauffeurs,id',
+            'statut' => 'required|string',
+            'passagers' => 'nullable|array',
+            'passagers.*' => 'exists:admninistrations,id',
         ]);
 
-        Reservation::create($request->all());
+        $reservation = Reservation::create([
+            'date' => $request->date,
+            'trajet_id' => $request->trajet_id,
+            'vehicule_id' => $request->vehicule_id,
+            'chauffeur_id' => $request->chauffeur_id,
+            'statut' => $request->statut,
+        ]);
+
+        if ($request->has('passagers')) {
+            $reservation->administration()->attach($request->passagers);
+        }
+
         return redirect()->route('reservations.index');
     }
 
@@ -54,7 +68,13 @@ class ReservationController extends Controller
      */
     public function show(Reservation $reservation)
     {
-        return view('reservations.show', compact('reservation'));
+        $trajets = Trajet::all();
+        $vehicules = Vehicule::all();
+        $chauffeurs = Chauffeur::all();
+        $passagers = Admninistration::all();
+
+        $reservation->load(['trajet', 'vehicule', 'chauffeur', 'administration']);
+        return view('reservations.show', compact('reservation', 'trajets', 'vehicules', 'chauffeurs', 'passagers'));
     }
 
     /**
@@ -62,7 +82,13 @@ class ReservationController extends Controller
      */
     public function edit(Reservation $reservation)
     {
-        return view('reservations.edit', compact('reservation'));
+        $trajets = Trajet::all();
+        $vehicules = Vehicule::all();
+        $chauffeurs = Chauffeur::all();
+        $passagers = Admninistration::all();
+        $reservation->load('administration');
+
+        return view('reservations.edit', compact('reservation', 'trajets', 'vehicules', 'chauffeurs', 'passagers'));
     }
 
     /**
@@ -71,11 +97,25 @@ class ReservationController extends Controller
     public function update(Request $request, Reservation $reservation)
     {
         $request->validate([
-            'date'=>'required',
-            'statut'=>'required',
+            'date' => 'required|date',
+            'trajet_id' => 'required|exists:trajets,id',
+            'vehicule_id' => 'required|exists:vehicules,id',
+            'chauffeur_id' => 'required|exists:chauffeurs,id',
+            'statut' => 'required|string',
+            'passagers' => 'nullable|array',
+            'passagers.*' => 'exists:admninistrations,id',
         ]);
 
-        $reservation->update($request->all());
+        $reservation->update([
+            'date' => $request->date,
+            'trajet_id' => $request->trajet_id,
+            'vehicule_id' => $request->vehicule_id,
+            'chauffeur_id' => $request->chauffeur_id,
+            'statut' => $request->statut,
+        ]);
+
+        $reservation->passagers()->sync($request->passagers ?? []);
+
         return redirect()->route('reservations.index');
     }
 
@@ -84,7 +124,9 @@ class ReservationController extends Controller
      */
     public function destroy(Reservation $reservation)
     {
+        $reservation->administration()->detach();
         $reservation->delete();
+
         return redirect()->route('reservations.index');
     }
 }

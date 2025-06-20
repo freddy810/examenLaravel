@@ -34,7 +34,11 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="statut" class="form-label">statut</label>
-                            <input type="text" name="statut" id="statut" class="form-control">
+                            <select name="statut" id="statut" class="form-control">
+                                <option value="disponible">Disponible</option>
+                                <option value="en reparation">En Réparation</option>
+                                <option value="en mission">En Mission</option>
+                            </select>
                         </div>
                     </div>
 

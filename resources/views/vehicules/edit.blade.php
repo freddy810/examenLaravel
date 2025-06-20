@@ -31,11 +31,15 @@
                             <input type="text" name="modele" id="modele" class="form-control" value="{{old('modele', $vehicule->modele)}}">
                         </div>
                     </div>
-
+                    
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="statut" class="form-label">statut</label>
-                            <input type="text" name="statut" id="statut" class="form-control" value="{{old('statut', $vehicule->statut)}}">
+                            <select name="statut" id="statut" class="form-control">
+                                <option value="disponible" {{ old('statut', $vehicule->statut) == 'disponible' ? 'selected' : '' }}>Disponible</option>
+                                <option value="en reparation" {{ old('statut', $vehicule->statut) == 'en reparation' ? 'selected' : '' }}>En réparation</option>
+                                <option value="en mission" {{ old('statut', $vehicule->statut) == 'en mission' ? 'selected' : '' }}>En mission</option>
+                            </select>
                         </div>
                     </div>
 
